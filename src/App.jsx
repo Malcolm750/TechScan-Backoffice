@@ -9,6 +9,11 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
 
+// --- CONFIGURATION API IA (Gemini) ---
+// ⚠️ DÉCOMMENTEZ CETTE LIGNE POUR VOTRE PROJET STACKBLITZ / VERCEL
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+
+
 // Composant pour écraser les marges par défaut de Vite/StackBlitz
 const GlobalCssReset = () => (
   <style dangerouslySetInnerHTML={{__html: `
@@ -121,28 +126,78 @@ export default function BackOfficeApp() {
     });
   };
 
-  // 🤖 Moteur IA (Simulation en attendant Gemini)
+  // 🤖 Moteur IA (Connexion à la vraie API Google Gemini)
   const runAIAnalysis = async () => {
     if (!selectedArticle) return;
     setIsProcessingAI(true);
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simule la réflexion de l'IA
-      
-      // Données simulées par l'IA
-      const aiResponse = {
-        designation: "Disjoncteur Ph+N 16A Courbe C",
-        marque: "Schneider Electric",
-        reference_fabricant: selectedArticle.code_barre.substring(0, 6) || "A9F74616",
-        groupe: "Électricité",
-        famille: "Tableau Modulaire",
-        type: "Disjoncteur"
-      };
+      if (!GEMINI_API_KEY) {
+        throw new Error("Clé API manquante. Ajoutez VITE_GEMINI_API_KEY sur Vercel.");
+      }
 
-      setFormData(aiResponse);
+      // 1. On récupère l'image depuis Supabase et on la convertit en Base64 pour l'IA
+      const imageResponse = await fetch(selectedArticle.photo_url);
+      const imageBlob = await imageResponse.blob();
+      const base64Image = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result.split(',')[1]);
+          reader.readAsDataURL(imageBlob);
+      });
+
+      // 2. Le "Prompt" (Nos consignes très strictes pour l'IA)
+      const prompt = `Tu es un expert magasinier technique (bricolage, électricité, plomberie, quincaillerie, etc.).
+      Analyse l'image fournie et le code-barre scanné : ${selectedArticle.code_barre}.
+      Identifie cet article et déduis un maximum d'informations.
+      IMPORTANT: Tu dois STRICTEMENT renvoyer un objet JSON valide, sans aucun texte autour, en respectant cette structure exacte :
+      {
+        "designation": "Nom complet et détaillé de l'article (ex: Perceuse visseuse sans fil 12V)",
+        "marque": "Nom du fabricant (ex: Bosch, Schneider, etc.) ou 'Inconnue' si impossible à déterminer",
+        "reference_fabricant": "La référence exacte du produit lue sur la photo ou déduite, sinon 'N/A'",
+        "groupe": "Grande catégorie parmi: Électricité, Outillage, Plomberie, Quincaillerie, Mécanique, Consommable",
+        "famille": "Sous-catégorie cohérente (ex: Tableau électrique, Visserie, Raccords)",
+        "type": "Type précis (ex: Disjoncteur, Perceuse, Cheville)"
+      }`;
+
+      // 3. Appel à l'API Google Gemini 1.5 Flash (Rapide, Gratuit et très bon en image)
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              contents: [{
+                  parts: [
+                      { text: prompt },
+                      { inlineData: { mimeType: imageBlob.type || "image/jpeg", data: base64Image } }
+                  ]
+              }],
+              // Force l'IA à renvoyer du JSON
+              generationConfig: { responseMimeType: "application/json" }
+          })
+      });
+
+      if (!response.ok) {
+        throw new Error("L'IA n'a pas pu analyser l'image.");
+      }
+
+      // 4. Traitement de la réponse JSON de l'IA
+      const result = await response.json();
+      const aiText = result.candidates[0].content.parts[0].text;
+      const aiData = JSON.parse(aiText);
+
+      // 5. Remplissage automatique du formulaire !
+      setFormData({
+        designation: aiData.designation || '',
+        marque: aiData.marque || '',
+        reference_fabricant: aiData.reference_fabricant || '',
+        groupe: aiData.groupe || '',
+        famille: aiData.famille || '',
+        type: aiData.type || ''
+      });
+
       showToast("Analyse IA terminée avec succès !");
     } catch(e) {
-      showToast("Erreur de l'analyse IA.");
+      console.error(e);
+      showToast(e.message || "Erreur de l'assistant IA.");
     } finally {
       setIsProcessingAI(false);
     }
