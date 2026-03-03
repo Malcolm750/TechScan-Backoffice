@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Search, CheckCircle, XCircle, AlertCircle, RefreshCw, Wand2, Database, ChevronRight, User, LogOut, Lock, Eye, EyeOff, Save, Layers, Hash, Calendar, ArrowRight } from 'lucide-react';
+import { Package, Search, CheckCircle, XCircle, AlertCircle, RefreshCw, Wand2, Database, ChevronRight, User, LogOut, Lock, Eye, EyeOff, Save, Layers, Hash, Calendar, ArrowRight, MapPin } from 'lucide-react';
 
-// --- CONFIGURATION SUPABASE ---
 import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-// On active le client Supabase si les variables sont présentes
 const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
 export default function BackOfficeApp() {
@@ -220,68 +218,49 @@ export default function BackOfficeApp() {
     );
   }
 
-  // VUE 2 : ÉCRAN DE CONNEXION DESKTOP (Split Screen)
+  // VUE 2 : ÉCRAN DE CONNEXION (Repris du design de l'application Scan)
   if (!session) {
     return (
-      <div className="flex h-screen w-full bg-white font-sans overflow-hidden">
-        {/* Partie gauche : Visuel Pro (Émeraude) */}
-        <div className="hidden lg:flex w-1/2 bg-emerald-900 relative items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#10b981 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-emerald-800/50 to-slate-900/80"></div>
-          
-          <div className="relative z-10 text-white max-w-lg px-12">
-            <div className="w-20 h-20 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-2xl shadow-emerald-500/30 mb-8">
+      <div className="flex h-screen w-full items-center justify-center bg-slate-900 p-6">
+        <div className="bg-slate-800 p-8 md:p-10 rounded-[2.5rem] max-w-md w-full shadow-2xl border border-slate-700 animate-in fade-in zoom-in-95 duration-300">
+          <div className="flex justify-center mb-8">
+            <div className="w-20 h-20 bg-emerald-600 rounded-3xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
               <Database size={40} className="text-white" />
             </div>
-            <h1 className="text-5xl font-black mb-6 leading-tight">Centre de<br/>Référencement</h1>
-            <p className="text-emerald-100 text-xl leading-relaxed">
-              Gérez les demandes de création d'articles du magasin. L'intelligence artificielle analyse les photos scannées par les techniciens pour automatiser la création du catalogue.
-            </p>
           </div>
-        </div>
-
-        {/* Partie droite : Formulaire */}
-        <div className="w-full lg:w-1/2 flex items-center justify-center bg-slate-50 p-8">
-          <div className="w-full max-w-md bg-white p-10 rounded-3xl shadow-xl border border-slate-100">
-            <h2 className="text-3xl font-extrabold text-slate-800 mb-2">Connexion</h2>
-            <p className="text-slate-500 mb-10">Accédez au Back-Office TechScan</p>
-
-            {authError && (
-              <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl mb-8 flex items-center gap-3 border border-red-100">
-                <AlertCircle size={20} className="shrink-0" />
-                <span className="text-sm font-medium">{authError}</span>
+          <h1 className="text-3xl font-extrabold text-white text-center mb-2">Back-Office</h1>
+          <p className="text-slate-400 text-center mb-8">Connectez-vous pour gérer le catalogue</p>
+          
+          {authError && <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-2xl mb-6 text-sm text-center">{authError}</div>}
+          
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div>
+              <label className="text-slate-300 text-sm font-bold mb-2 block">Identifiant (Email)</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500"><User size={20} /></div>
+                <input type="email" required className="w-full bg-slate-900 border border-slate-700 text-white rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:border-emerald-500 transition-colors" placeholder="expert@techscan.fr" value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
-            )}
-
-            <form onSubmit={handleLogin} className="space-y-6">
-              <div>
-                <label className="text-slate-700 text-sm font-bold mb-2 block">Adresse Email</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400"><User size={20} /></div>
-                  <input type="email" required className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl py-3.5 pl-12 pr-4 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all font-medium" placeholder="expert@techscan.fr" value={email} onChange={(e) => setEmail(e.target.value)} />
-                </div>
+            </div>
+            <div>
+              <label className="text-slate-300 text-sm font-bold mb-2 block">Mot de passe</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500"><Lock size={20} /></div>
+                <input type={showPassword ? "text" : "password"} required className="w-full bg-slate-900 border border-slate-700 text-white rounded-2xl py-4 pl-12 pr-12 focus:outline-none focus:border-emerald-500 transition-colors" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-300 transition-colors">
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
-              <div>
-                <label className="text-slate-700 text-sm font-bold mb-2 block">Mot de passe</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400"><Lock size={20} /></div>
-                  <input type={showPassword ? "text" : "password"} required className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl py-3.5 pl-12 pr-12 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all font-medium" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors">
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
-                </div>
-              </div>
-              <button type="submit" disabled={authLoading} className="w-full py-4 mt-8 bg-emerald-600 rounded-xl text-white text-lg font-bold shadow-lg shadow-emerald-500/25 hover:bg-emerald-500 active:scale-[0.98] transition-all disabled:opacity-50">
-                {authLoading ? 'Connexion en cours...' : 'Accéder au module'}
-              </button>
-            </form>
-          </div>
+            </div>
+            <button type="submit" disabled={authLoading} className="w-full py-4 mt-4 bg-emerald-600 rounded-2xl text-white text-lg font-bold shadow-lg shadow-emerald-500/30 hover:bg-emerald-500 active:scale-[0.98] transition-all disabled:opacity-50">
+              {authLoading ? 'Connexion...' : 'Se connecter'}
+            </button>
+          </form>
         </div>
       </div>
     );
   }
 
-  // VUE 3 : LE DASHBOARD BACK-OFFICE
+  // VUE 3 : LE DASHBOARD BACK-OFFICE FULL-SCREEN
   return (
     <div className="flex flex-col h-screen w-full bg-slate-100 font-sans text-slate-800 overflow-hidden">
       
@@ -324,9 +303,9 @@ export default function BackOfficeApp() {
       {/* CORPS DU DASHBOARD */}
       <div className="flex-1 flex overflow-hidden">
         
-        {/* Colonne de gauche : File d'attente (Largeur fixe sur desktop) */}
-        <aside className="w-[380px] bg-white border-r border-slate-200 flex flex-col z-10 shrink-0">
-          <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between shrink-0">
+        {/* Colonne de gauche : File d'attente (Largeur fixe) */}
+        <aside className="w-80 lg:w-[350px] bg-white border-r border-slate-200 flex flex-col z-10 shrink-0 shadow-sm">
+          <div className="p-5 border-b border-slate-100 bg-slate-50 flex items-center justify-between shrink-0">
              <div>
                <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                  <Package size={20} className="text-emerald-600" /> File d'attente
@@ -338,7 +317,7 @@ export default function BackOfficeApp() {
              </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/30">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center h-40 text-slate-400">
                 <RefreshCw size={24} className="animate-spin mb-3" />
@@ -376,8 +355,8 @@ export default function BackOfficeApp() {
           </div>
         </aside>
 
-        {/* Zone Principale : Espace de travail IA */}
-        <main className="flex-1 bg-slate-100/50 relative overflow-y-auto p-8 xl:p-10">
+        {/* Zone Principale : Espace de travail Fluide */}
+        <main className="flex-1 relative overflow-y-auto p-6 lg:p-8">
            {!selectedArticle ? (
               <div className="h-full flex flex-col items-center justify-center text-slate-400">
                  <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-200 mb-6">
@@ -387,18 +366,18 @@ export default function BackOfficeApp() {
                  <p className="text-lg text-slate-500">Sélectionnez un article dans la liste de gauche pour l'analyser.</p>
               </div>
            ) : (
-              <div className="max-w-6xl mx-auto flex flex-col xl:flex-row gap-8 animate-in fade-in zoom-in-95 duration-300 h-full">
+              <div className="w-full h-full flex flex-col xl:flex-row gap-6 xl:gap-8 animate-in fade-in zoom-in-95 duration-300">
                  
                  {/* COLONNE PHOTO & IA */}
-                 <div className="w-full xl:w-[45%] flex flex-col gap-6">
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                 <div className="w-full xl:w-5/12 flex flex-col gap-6">
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
                        <div className="flex justify-between items-center mb-4">
                          <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Image Source</h3>
                          <span className="text-slate-700 font-mono font-bold bg-slate-100 px-3 py-1 rounded-lg border border-slate-200 flex items-center gap-2">
                            <Hash size={14} className="text-slate-400"/> {selectedArticle.code_barre}
                          </span>
                        </div>
-                       <div className="bg-slate-900 rounded-xl overflow-hidden aspect-[4/3] flex items-center justify-center relative shadow-inner w-full">
+                       <div className="bg-slate-900 rounded-xl overflow-hidden flex-1 min-h-[300px] flex items-center justify-center relative shadow-inner w-full">
                           <img src={selectedArticle.photo_url} alt="Pièce" className="max-w-full max-h-full object-contain" />
                        </div>
                     </div>
@@ -406,7 +385,7 @@ export default function BackOfficeApp() {
                     <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-2xl border border-indigo-100 shadow-inner flex flex-col items-center text-center">
                        <Wand2 size={32} className="text-indigo-500 mb-3" />
                        <h4 className="font-bold text-indigo-900 mb-1">Assistant Intelligence Artificielle</h4>
-                       <p className="text-sm text-indigo-700/80 mb-5">L'IA de TechScan va analyser l'image pour pré-remplir la fiche produit.</p>
+                       <p className="text-sm text-indigo-700/80 mb-5">L'IA va analyser l'image pour pré-remplir la fiche produit.</p>
                        
                        <button 
                           onClick={runAIAnalysis}
@@ -414,7 +393,7 @@ export default function BackOfficeApp() {
                           className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-lg shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-3 hover:shadow-indigo-500/50 hover:scale-[1.02] transition-all disabled:opacity-50 disabled:hover:scale-100"
                        >
                           {isProcessingAI ? (
-                             <><RefreshCw size={24} className="animate-spin" /> Analyse visuelle en cours...</>
+                             <><RefreshCw size={24} className="animate-spin" /> Analyse en cours...</>
                           ) : (
                              <><Wand2 size={24} /> Analyser et Pré-remplir</>
                           )}
@@ -423,15 +402,15 @@ export default function BackOfficeApp() {
                  </div>
 
                  {/* COLONNE FORMULAIRE DE VALIDATION */}
-                 <div className="w-full xl:w-[55%] flex flex-col">
-                    <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-200 flex-1 flex flex-col">
+                 <div className="w-full xl:w-7/12 flex flex-col">
+                    <div className="bg-white p-6 lg:p-8 rounded-2xl shadow-lg border border-slate-200 flex-1 flex flex-col">
                        <div className="flex items-center gap-3 mb-8 border-b border-slate-100 pb-5">
                           <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center">
                              <Database size={20} />
                           </div>
                           <div>
                             <h3 className="text-2xl font-black text-slate-800">Fiche Catalogue</h3>
-                            <p className="text-sm text-slate-500 font-medium">Vérifiez et complétez les informations avant validation.</p>
+                            <p className="text-sm text-slate-500 font-medium">Vérifiez et complétez les informations.</p>
                           </div>
                        </div>
                        
@@ -451,7 +430,7 @@ export default function BackOfficeApp() {
                                />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-5">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                <div>
                                   <label className="text-slate-700 text-xs font-extrabold mb-2 block uppercase tracking-wider">Marque <span className="text-red-500">*</span></label>
                                   <input 
@@ -478,7 +457,7 @@ export default function BackOfficeApp() {
                           {/* SECTION CLASSIFICATION */}
                           <div>
                             <h4 className="text-sm font-bold text-slate-500 mb-4 flex items-center gap-2 uppercase tracking-widest"><Layers size={16}/> Classification</h4>
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                <div>
                                   <label className="text-slate-600 text-xs font-bold mb-1.5 block">Groupe</label>
                                   <input type="text" value={formData.groupe} onChange={(e) => setFormData({...formData, groupe: e.target.value})} className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm font-medium rounded-lg py-2.5 px-3 focus:bg-white focus:border-emerald-400 focus:outline-none" />
@@ -496,13 +475,13 @@ export default function BackOfficeApp() {
                        </div>
 
                        {/* ACTIONS FINALES */}
-                       <div className="mt-8 pt-6 border-t border-slate-100 flex gap-4">
+                       <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row gap-4">
                           <button 
                              onClick={handleRejectArticle}
-                             className="px-6 py-4 rounded-xl border-2 border-red-100 text-red-600 font-bold hover:bg-red-50 hover:border-red-200 transition-all flex items-center gap-2"
+                             className="px-6 py-4 rounded-xl border-2 border-red-100 text-red-600 font-bold hover:bg-red-50 hover:border-red-200 transition-all flex items-center justify-center gap-2"
                              title="Supprimer la demande"
                           >
-                             <XCircle size={22} />
+                             <XCircle size={22} /> Rejeter
                           </button>
                           <button 
                              onClick={handleSaveToCatalog}
