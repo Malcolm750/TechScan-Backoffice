@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Search, CheckCircle, XCircle, AlertCircle, RefreshCw, Wand2, Database, ChevronRight, User, LogOut, Lock, Eye, EyeOff, Save, Layers, Hash, Calendar, ArrowRight, MapPin } from 'lucide-react';
+import { Package, Search, CheckCircle, XCircle, AlertCircle, RefreshCw, Wand2, Database, ChevronRight, User, LogOut, Lock, Eye, EyeOff, Save, Layers, Hash, Calendar, ArrowRight, MapPin, Cpu } from 'lucide-react';
 
 // --- CONFIGURATION SUPABASE ---
 // ⚠️ DÉCOMMENTEZ CES LIGNES POUR VOTRE PROJET STACKBLITZ / VERCEL
@@ -36,6 +36,9 @@ export default function BackOfficeApp() {
   const [isProcessingAI, setIsProcessingAI] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
   const [stats, setStats] = useState({ totalProcessed: 0 });
+  
+  // État pour le modèle IA sélectionné (2.5-flash par défaut, modèle stable actuel)
+  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
 
   // État du formulaire d'édition
   const [formData, setFormData] = useState({
@@ -125,7 +128,7 @@ export default function BackOfficeApp() {
     });
   };
 
-  // 🤖 Moteur IA (Connexion à la vraie API Google Gemini)
+  // 🤖 Moteur IA (Connexion à la vraie API Google Gemini avec choix du modèle)
   const runAIAnalysis = async () => {
     if (!selectedArticle) return;
     setIsProcessingAI(true);
@@ -135,10 +138,9 @@ export default function BackOfficeApp() {
         throw new Error("Clé API manquante. Ajoutez VITE_GEMINI_API_KEY sur Vercel.");
       }
 
-      console.log("Démarrage de l'analyse IA...");
+      console.log(`Démarrage de l'analyse IA avec le modèle : ${selectedModel}...`);
 
       // 1. On récupère l'image depuis Supabase
-      console.log("Téléchargement de l'image :", selectedArticle.photo_url);
       const imageResponse = await fetch(selectedArticle.photo_url);
       if (!imageResponse.ok) {
           throw new Error("Impossible de télécharger l'image depuis le serveur.");
@@ -151,8 +153,6 @@ export default function BackOfficeApp() {
           reader.onloadend = () => resolve(reader.result.split(',')[1]);
           reader.readAsDataURL(imageBlob);
       });
-
-      console.log("Image convertie, envoi à Google Gemini...");
 
       // 2. Le "Prompt" (Nos consignes très strictes pour l'IA)
       const promptText = `Tu es un expert magasinier technique (bricolage, électricité, plomberie, quincaillerie, mécanique, etc.).
@@ -169,8 +169,8 @@ export default function BackOfficeApp() {
         "type": "Type précis (ex: Disjoncteur, Perceuse, Cheville)"
       }`;
 
-      // 3. Appel à l'API Google Gemini (Basé sur la documentation officielle)
-      const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent';
+      // 3. Appel à l'API Google Gemini dynamique selon le modèle choisi
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent`;
       
       const requestBody = {
           contents: [{
@@ -202,12 +202,11 @@ export default function BackOfficeApp() {
       if (!response.ok) {
           const errorData = await response.json();
           console.error("Erreur API Gemini:", errorData);
-          throw new Error(`Erreur API Google: ${errorData?.error?.message || response.statusText}`);
+          throw new Error(`Erreur API: ${errorData?.error?.message || response.statusText}`);
       }
 
       // 5. Traitement de la réponse
       const result = await response.json();
-      console.log("Réponse brute de Gemini:", result);
 
       if (!result.candidates || result.candidates.length === 0) {
            throw new Error("L'IA n'a renvoyé aucun résultat.");
@@ -215,11 +214,10 @@ export default function BackOfficeApp() {
 
       const aiText = result.candidates[0].content.parts[0].text;
       
-      // Parfois Gemini rajoute quand même des backticks malgré les consignes
+      // Nettoyage au cas où l'IA renvoie les balises Markdown malgré les consignes
       const cleanJsonText = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
       
       const aiData = JSON.parse(cleanJsonText);
-      console.log("Données parsées:", aiData);
 
       // 6. Remplissage automatique du formulaire
       setFormData({
@@ -231,7 +229,7 @@ export default function BackOfficeApp() {
         type: aiData.type || ''
       });
 
-      showToast("Analyse IA terminée avec succès !");
+      showToast(`Analyse réussie avec ${selectedModel} !`);
     } catch(e) {
       console.error("Détail du crash IA:", e);
       showToast(e.message || "Erreur lors de l'analyse IA.");
@@ -480,8 +478,8 @@ export default function BackOfficeApp() {
                 <div className="w-full h-full flex flex-col xl:flex-row gap-6 xl:gap-8 animate-in fade-in zoom-in-95 duration-300">
                    
                    {/* COLONNE PHOTO & IA */}
-                   <div className="w-full xl:w-5/12 flex flex-col gap-6 h-full">
-                      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col h-2/3">
+                   <div className="w-full xl:w-5/12 flex flex-col gap-4 h-full">
+                      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col h-[55%]">
                          <div className="flex justify-between items-center mb-4 shrink-0">
                            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Image Source</h3>
                            <span className="text-slate-700 font-mono font-bold bg-slate-100 px-3 py-1 rounded-lg border border-slate-200 flex items-center gap-2">
@@ -493,22 +491,41 @@ export default function BackOfficeApp() {
                          </div>
                       </div>
 
-                      <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-2xl border border-indigo-100 shadow-inner flex flex-col items-center text-center h-1/3 justify-center">
-                         <Wand2 size={32} className="text-indigo-500 mb-3" />
-                         <h4 className="font-bold text-indigo-900 mb-1">Assistant Intelligence Artificielle</h4>
-                         <p className="text-sm text-indigo-700/80 mb-5">L'IA va analyser l'image pour pré-remplir la fiche produit.</p>
-                         
-                         <button 
-                            onClick={runAIAnalysis}
-                            disabled={isProcessingAI}
-                            className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-lg shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-3 hover:shadow-indigo-500/50 hover:scale-[1.02] transition-all disabled:opacity-50 disabled:hover:scale-100"
-                         >
-                            {isProcessingAI ? (
-                               <><RefreshCw size={24} className="animate-spin" /> Analyse en cours...</>
-                            ) : (
-                               <><Wand2 size={24} /> Analyser et Pré-remplir</>
-                            )}
-                         </button>
+                      <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-2xl border border-indigo-100 shadow-inner flex flex-col items-center justify-center h-[45%]">
+                         <div className="flex flex-col w-full max-w-sm mx-auto h-full justify-between py-2">
+                             <div className="text-center">
+                                 <Wand2 size={28} className="text-indigo-500 mb-2 mx-auto" />
+                                 <h4 className="font-bold text-indigo-900 mb-1">Assistant IA TechScan</h4>
+                                 <p className="text-xs text-indigo-700/80 mb-4">Pré-remplissage automatique des fiches.</p>
+                             </div>
+                             
+                             <div className="w-full mb-4">
+                                 <label className="block text-[10px] font-bold text-indigo-800 uppercase tracking-wider mb-1.5 flex items-center gap-1"><Cpu size={12}/> Modèle IA (Moteur)</label>
+                                 <select 
+                                    value={selectedModel}
+                                    onChange={(e) => setSelectedModel(e.target.value)}
+                                    className="w-full p-2.5 text-sm font-medium rounded-xl border border-indigo-200 bg-white text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-400 shadow-sm cursor-pointer"
+                                    disabled={isProcessingAI}
+                                 >
+                                    <option value="gemini-2.5-flash">Gemini 2.5 Flash (Stable & Rapide - Recommandé)</option>
+                                    <option value="gemini-2.5-pro">Gemini 2.5 Pro (Raisonnement avancé)</option>
+                                    <option value="gemini-3-flash-preview">Gemini 3 Flash Preview (Nouvelle génération)</option>
+                                    <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview (Intelligence max)</option>
+                                 </select>
+                             </div>
+                             
+                             <button 
+                                onClick={runAIAnalysis}
+                                disabled={isProcessingAI}
+                                className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-base shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2 hover:shadow-indigo-500/50 hover:scale-[1.02] transition-all disabled:opacity-50 disabled:hover:scale-100"
+                             >
+                                {isProcessingAI ? (
+                                   <><RefreshCw size={20} className="animate-spin" /> Analyse en cours...</>
+                                ) : (
+                                   <><Wand2 size={20} /> Lancer l'analyse</>
+                                )}
+                             </button>
+                         </div>
                       </div>
                    </div>
 
