@@ -8,11 +8,9 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
-
 // --- CONFIGURATION API IA (Gemini) ---
 // ⚠️ DÉCOMMENTEZ CETTE LIGNE POUR VOTRE PROJET STACKBLITZ / VERCEL
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-
 
 // Composant pour écraser les marges par défaut de Vite/StackBlitz
 const GlobalCssReset = () => (
@@ -136,55 +134,91 @@ export default function BackOfficeApp() {
         throw new Error("Clé API manquante. Ajoutez VITE_GEMINI_API_KEY sur Vercel.");
       }
 
-      // 1. On récupère l'image depuis Supabase et on la convertit en Base64 pour l'IA
+      console.log("Démarrage de l'analyse IA...");
+
+      // 1. On récupère l'image depuis Supabase
+      console.log("Téléchargement de l'image :", selectedArticle.photo_url);
       const imageResponse = await fetch(selectedArticle.photo_url);
+      if (!imageResponse.ok) {
+          throw new Error("Impossible de télécharger l'image depuis le serveur.");
+      }
       const imageBlob = await imageResponse.blob();
+      
+      // Conversion en Base64
       const base64Image = await new Promise((resolve) => {
           const reader = new FileReader();
           reader.onloadend = () => resolve(reader.result.split(',')[1]);
           reader.readAsDataURL(imageBlob);
       });
 
+      console.log("Image convertie, envoi à Google Gemini...");
+
       // 2. Le "Prompt" (Nos consignes très strictes pour l'IA)
-      const prompt = `Tu es un expert magasinier technique (bricolage, électricité, plomberie, quincaillerie, etc.).
-      Analyse l'image fournie et le code-barre scanné : ${selectedArticle.code_barre}.
-      Identifie cet article et déduis un maximum d'informations.
-      IMPORTANT: Tu dois STRICTEMENT renvoyer un objet JSON valide, sans aucun texte autour, en respectant cette structure exacte :
+      const promptText = `Tu es un expert magasinier technique (bricolage, électricité, plomberie, quincaillerie, mécanique, etc.).
+      Analyse l'image fournie et le code-barre scanné suivant : ${selectedArticle.code_barre}.
+      Identifie cet article et déduis un maximum d'informations visibles sur la boîte, l'étiquette ou l'objet lui-même.
+      IMPORTANT: Tu dois STRICTEMENT renvoyer un objet JSON valide, sans aucun texte ou formatage markdown (pas de \`\`\`json) autour.
+      Respecte cette structure exacte :
       {
         "designation": "Nom complet et détaillé de l'article (ex: Perceuse visseuse sans fil 12V)",
         "marque": "Nom du fabricant (ex: Bosch, Schneider, etc.) ou 'Inconnue' si impossible à déterminer",
         "reference_fabricant": "La référence exacte du produit lue sur la photo ou déduite, sinon 'N/A'",
-        "groupe": "Grande catégorie parmi: Électricité, Outillage, Plomberie, Quincaillerie, Mécanique, Consommable",
+        "groupe": "Choisis LA catégorie la plus logique parmi: Électricité, Outillage, Plomberie, Quincaillerie, Mécanique, Consommable",
         "famille": "Sous-catégorie cohérente (ex: Tableau électrique, Visserie, Raccords)",
         "type": "Type précis (ex: Disjoncteur, Perceuse, Cheville)"
       }`;
 
-      // 3. Appel à l'API Google Gemini 1.5 Flash (Rapide, Gratuit et très bon en image)
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      // 3. Appel à l'API Google Gemini 1.5 Flash
+      // Correction de l'URL de l'API (ajout de /v1beta/models/...)
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+      
+      const requestBody = {
+          contents: [{
+              parts: [
+                  { text: promptText },
+                  { 
+                      inlineData: { 
+                          mimeType: imageBlob.type || "image/jpeg", 
+                          data: base64Image 
+                      } 
+                  }
+              ]
+          }],
+          generationConfig: { 
+              responseMimeType: "application/json" 
+          }
+      };
+
+      const response = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-              contents: [{
-                  parts: [
-                      { text: prompt },
-                      { inlineData: { mimeType: imageBlob.type || "image/jpeg", data: base64Image } }
-                  ]
-              }],
-              // Force l'IA à renvoyer du JSON
-              generationConfig: { responseMimeType: "application/json" }
-          })
+          body: JSON.stringify(requestBody)
       });
 
+      // 4. Gestion des erreurs de l'API Google
       if (!response.ok) {
-        throw new Error("L'IA n'a pas pu analyser l'image.");
+          const errorData = await response.json();
+          console.error("Erreur API Gemini:", errorData);
+          throw new Error(`Erreur API Google: ${errorData?.error?.message || response.statusText}`);
       }
 
-      // 4. Traitement de la réponse JSON de l'IA
+      // 5. Traitement de la réponse
       const result = await response.json();
-      const aiText = result.candidates[0].content.parts[0].text;
-      const aiData = JSON.parse(aiText);
+      console.log("Réponse brute de Gemini:", result);
 
-      // 5. Remplissage automatique du formulaire !
+      if (!result.candidates || result.candidates.length === 0) {
+           throw new Error("L'IA n'a renvoyé aucun résultat.");
+      }
+
+      const aiText = result.candidates[0].content.parts[0].text;
+      
+      // Parfois Gemini rajoute quand même des backticks malgré les consignes
+      const cleanJsonText = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
+      
+      const aiData = JSON.parse(cleanJsonText);
+      console.log("Données parsées:", aiData);
+
+      // 6. Remplissage automatique du formulaire
       setFormData({
         designation: aiData.designation || '',
         marque: aiData.marque || '',
@@ -196,8 +230,8 @@ export default function BackOfficeApp() {
 
       showToast("Analyse IA terminée avec succès !");
     } catch(e) {
-      console.error(e);
-      showToast(e.message || "Erreur de l'assistant IA.");
+      console.error("Détail du crash IA:", e);
+      showToast(e.message || "Erreur lors de l'analyse IA.");
     } finally {
       setIsProcessingAI(false);
     }
