@@ -421,4 +421,3 @@ export default function BackOfficeApp() {
       </div>
     </>
   );
-}
