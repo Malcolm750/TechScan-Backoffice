@@ -162,7 +162,7 @@ export default function BackOfficeApp() {
         groupe: formData.groupe, 
         famille: formData.famille, 
         type: formData.type,
-        photo: selectedArticle.photo_url, // CORRECTION : 'photo' au lieu de 'photo_url'
+        photo: selectedArticle.photo_url,
         statut: 'Actif', 
         site_rattachement: selectedArticle.magasin || 'Non défini'
       };
@@ -179,6 +179,19 @@ export default function BackOfficeApp() {
       if (deleteError) {
         console.error("Erreur Suppression:", deleteError);
         throw new Error(`Suppression file d'attente: ${deleteError.message}`);
+      }
+
+      // 3. NOUVEAU : Mettre à jour l'historique sur les tablettes pour cet article
+      const { error: historyError } = await supabase
+        .from('historique_scans')
+        .update({ 
+            details: newArticle, // Remplace les détails provisoires par les infos validées
+            trouve: true         // L'article est maintenant officiellement "trouvé"
+        })
+        .eq('code_barre', selectedArticle.code_barre);
+
+      if (historyError) {
+        console.warn("Mise à jour de l'historique échouée (non bloquant):", historyError);
       }
 
       setStats(prev => ({ ...prev, totalProcessed: prev.totalProcessed + 1 }));
@@ -201,6 +214,21 @@ export default function BackOfficeApp() {
         console.error("Erreur Rejet:", error);
         throw new Error(error.message);
       }
+
+      // NOUVEAU : Mettre à jour l'historique pour dire que l'article a été refusé
+      await supabase
+        .from('historique_scans')
+        .update({ 
+            details: {
+              code_barre: selectedArticle.code_barre,
+              designation: 'Article rejeté',
+              marque: 'Demande annulée',
+              photo: selectedArticle.photo_url,
+              statut: 'Rejeté'
+            }
+        })
+        .eq('code_barre', selectedArticle.code_barre);
+
       showToast("Demande supprimée.");
       setSelectedArticle(null);
       fetchPendingArticles();
