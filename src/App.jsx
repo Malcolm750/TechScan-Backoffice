@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Search, CheckCircle, XCircle, AlertCircle, RefreshCw, Wand2, Database, ChevronRight, User, LogOut, Lock, Eye, EyeOff, Save, Layers, Hash, Calendar, ArrowRight, MapPin, Cpu, Image as ImageIcon } from 'lucide-react';
 
-// ==========================================
-// ⚠️ INSTRUCTIONS POUR VERCEL / STACKBLITZ
-// ==========================================
+import { createClient } from '@supabase/supabase-js';
 
-// import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -295,7 +292,7 @@ export default function BackOfficeApp() {
                 <strong>Pour utiliser ce code sur Vercel ou StackBlitz :</strong>
                 <ul className="list-disc pl-5 mt-2 space-y-1">
                     <li>Allez dans le code source de l'application.</li>
-                    <li>Décommentez les 5 lignes d'importation Supabase et Gemini tout en haut du fichier.</li>
+                    <li>Décommentez les lignes d'importation Supabase et Gemini tout en haut du fichier.</li>
                 </ul>
             </div>
           </div>
