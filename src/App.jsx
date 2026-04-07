@@ -12,46 +12,334 @@ const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 // 📋 RÉFÉRENTIEL DU MAGASIN (Formaté pour une lecture directe)
 // ==========================================
 const REFERENTIEL = {
-  "CONSOMMABLES": {
-    "Consommables": [
-      "Abrasifs", "Adhesifs", "Agrafes", "Cable metallique", "Ciments et reboucheurs", 
-      "Colles", "Colorants", "Crayons, marqueurs et temoins", "Deggripants", "Drisses", 
-      "Films et polyanes", "Graisses et lubrifiants", "Joints, isolant et etancheite", 
-      "Mousses", "Peintures", "Enduits", "Produits d'entretien", "Soudure", "Disques", 
-      "Forets", "Gourdes", "Sel de déneigement", "Sel de régenration", "Cadenas de consignation"
-    ]
-  },
-  "PLOMBERIE": {
-    "Tube à souder": ["tube à souder"]
-  },
-  "EQUIPEMENT MEDICAL": {
-    "Chariot douche": ["Accessoires"],
-    "Lève malade": ["Accessoires"],
-    "Fauteuil roulant": ["Accessoires"],
-    "Table d'examen": ["Accessoires"],
-    "Berceaux": ["Accessoires"],
-    "Brancard": ["Accessoires"],
-    "eclairage opératoire": ["Accessoires"]
-  },
-  "EQUIPEMENT HOTELIER": {
-    "chariot et borne repas": ["Accessoires"],
-    "table de nuit": ["Accessoires"],
-    "Lave vaisselle": ["Accessoires"],
-    "Lave bassin": ["Accessoires"],
-    "Fontane à eau": ["Accessoires"],
-    "Machine à glaçon": ["Accessoires"],
-    "Machine à café": ["Accessoires"]
-  },
-  "AGENCEMENT": {
-    "MACONNERIE": ["ragréage", "carrelage", "platre", "Carreaux de platre", "plaque platre", "rails plaque de platre"],
-    "ameublement": ["tablettes bois"],
-    "menuiserie": ["plaque bois et pvc"]
-  },
-  "SIGNALETIQUE": {
-    "Signalétique": ["film et bache", "tonner"]
-  },
-  "EQUIPEMENT DE PROTECTION": {
-    "EPC": ["Barrière", "Plots"]
+  {
+    "CONSOMMABLES": {
+      "Consommables": [
+        "Abrasifs",
+        "Adhesifs",
+        "Agrafes",
+        "Cable metallique",
+        "Ciments et reboucheurs",
+        "Colles",
+        "Colorants",
+        "Crayons, marqueurs et temoins",
+        "Deggripants",
+        "Drisses",
+        "Films et polyanes",
+        "Graisses et lubrifiants",
+        "Joints, isolant et etancheite",
+        "Mousses",
+        "Peintures",
+        "Enduits",
+        "Produits d'entretien",
+        "Soudure",
+        "Disques",
+        "Forets",
+        "Gourdes",
+        "Sel de déneigement",
+        "Sel de régenration",
+        "Cadenas de consignation",
+        "Etiquette",
+        "Rubalise",
+        "Lames et mèches"
+      ]
+    },
+    "ELECTRICITE": {
+      "cheminement": [
+        "fixation cable",
+        "gaine et conduits",
+        "goulottes"
+      ],
+      "Courant faible": [
+        "gtb et régulation",
+        "appel malade",
+        "baie informatique",
+        "borne telephonie",
+        "Poste téléphonie fixe",
+        "Poste DECT",
+        "controle acces",
+        "interphonie",
+        "prise réseau",
+        "câble réseau",
+        "tv"
+      ],
+      "Courant fort": [
+        "alimentations et transformateurs",
+        "barette et borne sans vis",
+        "cable et fil",
+        "coffret et armoire electrique",
+        "commande et signalisation",
+        "comptage",
+        "connectique et raccordement",
+        "contacteur",
+        "disjoncteur",
+        "electricite courant fort accessoires",
+        "fiche et prolongateur",
+        "fusible",
+        "interrupteur sectionneur",
+        "prise de courant",
+        "raccord et cosse",
+        "relais",
+        "reperage",
+        "telerupteur"
+      ],
+      "Eclairage": [
+        "éclairage et ampoule fluo-compacte",
+        "éclairage et ampoule halogene",
+        "éclairage et ampoule à incandescence",
+        "éclairage et ampoule led",
+        "éclairage et ampoule sodium",
+        "appliques",
+        "commandes",
+        "connectique et raccordement"
+      ],
+      "Piles et batteries": [
+        "batterie lithium",
+        "batterie plomb",
+        "piles"
+      ]
+    },
+    "FLUIDES MEDICAUX": {
+      "Fluides médicaux": [
+        "clapet",
+        "Vanne dégraissée",
+        "coffret fluides medicaux",
+        "accessoires fluides médicaux",
+        "kit et sachets mainteannce"
+      ]
+    },
+    "OUTILLAGE": {
+      "Outillage": [
+        "outils peinture",
+        "outillage électro portatif",
+        "marquage",
+        "tablette",
+        "rallonges",
+        "manutention",
+        "outillage à main",
+        "rangement",
+        "mesure",
+        "eclairage portatif"
+      ]
+    },
+    "PLOMBERIE-FLUIDES-CVC": {
+      "Chauffage climatisaton et plomberie": [
+        "bouche de ventilation",
+        "Filtre à air",
+        "gaine de ventilation",
+        "moteur de ventilation",
+        "variateur de fréquence",
+        "variateur de ventilation",
+        "Volute",
+        "Moteur de pompe",
+        "accessoire radiateur",
+        "purgeur",
+        "robinet",
+        "joints",
+        "pompe",
+        "pompes accessoires",
+        "protection des reseaux",
+        "vannes 3 voies",
+        "Vannes 2 voies",
+        "vannes à soupape",
+        "vannes papillon",
+        "vannes regulation et servo"
+      ],
+      "Plomberie sanitaire": [
+        "accessoires plomberie sanitaire",
+        "accessoires robinetterie",
+        "évier et lavabo",
+        "flexibles",
+        "robinetterie",
+        "vidage et siphon",
+        "WC et accessoires"
+      ],
+      "Traitement d'eau": [
+        "filtration",
+        "chloration",
+        "produits de traitement d'eau"
+      ],
+      "Froid": [
+        "Froid"
+      ]
+    },
+    "QUINCAILLERIE": {
+      "Quincaillerie": [
+        "Accessoires mobilier",
+        "Protections murales",
+        "Bequilles, leviers et poignees",
+        "Cremones",
+        "Fermetures-serrures",
+        "Fixations",
+        "Pointes et clous",
+        "Visserie",
+        "Roues & roulettes"
+      ]
+    },
+    "AGENCEMENT": {
+      "Plafond": [
+        "faux plafond"
+      ],
+      "MACONNERIE": [
+        "ragréage",
+        "carrelage",
+        "platre",
+        "Carreaux de platre",
+        "plaque platre",
+        "rails plaque de platre"
+      ],
+      "ameublement": [
+        "tablettes bois"
+      ],
+      "menuiserie": [
+        "plaque bois et pvc"
+      ]
+    },
+    "SECURITE INCENDIE": {
+      "Sécurité incendie": [
+        "coffrets securite",
+        "eclairage de secours",
+        "detecteur incendie",
+        "eclairage de securite"
+      ]
+    },
+    "TUYAUTERIE": {
+      "Acier noir": [
+        "raccord acier noir",
+        "Tuyauterie acier noir"
+      ],
+      "Inox": [
+        "Raccord Inox",
+        "Tuyauterie inox"
+      ],
+      "Cuivre": [
+        "tuyauterie cuivre",
+        "raccord cuivre"
+      ],
+      "Acier galvanisé": [
+        "tuyauterie galva",
+        "raccord galva"
+      ],
+      "Laiton": [
+        "raccord laiton",
+        "clapets anti-retour laiton"
+      ],
+      "PVC": [
+        "tuyauterie pvc",
+        "raccord pvc"
+      ],
+      "Fonte": [
+        "tuyauterie fonte",
+        "raccord fonte"
+      ],
+      "HTA": [
+        "tuyauterie HTA",
+        "raccord hta",
+        "accessoires tuyautreie HTA"
+      ],
+      "Souple": [
+        "tuyauterie souple",
+        "raccord souple"
+      ],
+      "Per": [
+        "Accesoire per",
+        "Raccord per",
+        "Tuyauterie per"
+      ],
+      "Multi couche": [
+        "Accesoire multi couche",
+        "Raccord multi couche",
+        "Tuyauterie multi couche"
+      ]
+    },
+    "EQUIPEMENT BIO MEDICAL (PROVISOIRE)": {
+      "Equipement biomédial": [
+        "Accessoires équipement biomédial"
+      ]
+    },
+    "EQUIPEMENT MEDICAL": {
+      "Lits": [
+        "moteur de lits",
+        "télécommande de lits",
+        "Accéssoires",
+        "barrière"
+      ],
+      "Chariot douche": [
+        "Accessoires"
+      ],
+      "Lève malade": [
+        "Accessoires"
+      ],
+      "Fauteuil roulant": [
+        "Accessoires"
+      ],
+      "Table d'examen": [
+        "Accessoires"
+      ],
+      "Berceaux": [
+        "Accessoires"
+      ],
+      "Brancard": [
+        "Accessoires"
+      ],
+      "eclairage opératoire": [
+        "Accessoires"
+      ]
+    },
+    "METALLERIE": {
+      "Tolle": [
+        "tolle acier"
+      ],
+      "Tube à souder": [
+        "tube à souder"
+      ]
+    },
+    "EQUIPEMENT HOTELIER": {
+      "chariot et borne repas": [
+        "Accessoires"
+      ],
+      "table de nuit": [
+        "Accessoires"
+      ],
+      "Lave vaisselle": [
+        "Accessoires"
+      ],
+      "Lave bassin": [
+        "Accessoires"
+      ],
+      "Fontane à eau": [
+        "Accessoires"
+      ],
+      "Machine à glaçon": [
+        "Accessoires"
+      ],
+      "Machine à café": [
+        "Accessoires"
+      ]
+    },
+    "SIGNALETIQUE": {
+      "Signalétique": [
+        "film et bache",
+        "tonner"
+      ]
+    },
+    "EQUIPEMENT DE PROTECTION": {
+      "EPC": [
+        "Barrière",
+        "Plots"
+      ],
+      "EPI": [
+        "Casque",
+        "Gant",
+        "Lunette",
+        "Bouchons auditives",
+        "Visière",
+        "Masque",
+        "Gilet",
+        "Combinaison",
+        "Chaussure"
+      ]
+    }
   }
 };
 
