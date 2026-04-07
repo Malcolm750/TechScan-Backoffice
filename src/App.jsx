@@ -1,81 +1,77 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Package, Search, CheckCircle, XCircle, AlertCircle, RefreshCw, Wand2, Database, ChevronRight, User, LogOut, Lock, Eye, EyeOff, Save, Layers, Hash, Calendar, ArrowRight, MapPin, Cpu, Image as ImageIcon } from 'lucide-react';
 
 // ==========================================
-// ⚠️ INSTRUCTIONS DE DÉPLOIEMENT (VERCEL / STACKBLITZ)
-// Décommentez les lignes ci-dessous dans votre véritable projet
+// ⚠️ INSTRUCTIONS POUR VERCEL / STACKBLITZ
 // ==========================================
 
 // import { createClient } from '@supabase/supabase-js';
-// const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-// const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-// const supabase = createClient(supabaseUrl, supabaseKey);
-
-// const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-
-// --- VARIABLES POUR LA PRÉVISUALISATION (À SUPPRIMER EN PRODUCTION) ---
-const supabase = null;
-const GEMINI_API_KEY = '';
-// ----------------------------------------------------------------------
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 // ==========================================
-// 📋 RÉFÉRENTIEL DU MAGASIN (Extrait)
-// Remplacez ce texte par le contenu complet de votre fichier CSV
+// 📋 RÉFÉRENTIEL DU MAGASIN (Formaté pour une lecture directe)
 // ==========================================
-const REFERENTIEL_CSV = `,Groupe,Famille,Type
-,CONSOMMABLES,Consommables,Abrasifs
-,CONSOMMABLES,Consommables,Adhesifs
-,CONSOMMABLES,Consommables,Agrafes
-,CONSOMMABLES,Consommables,Cable metallique
-,CONSOMMABLES,Consommables,Ciments et reboucheurs
-,CONSOMMABLES,Consommables,Colles
-,CONSOMMABLES,Consommables,Colorants
-,CONSOMMABLES,Consommables,Crayons, marqueurs et temoins
-,CONSOMMABLES,Consommables,Deggripants
-,CONSOMMABLES,Consommables,Drisses
-,CONSOMMABLES,Consommables,Films et polyanes
-,CONSOMMABLES,Consommables,Graisses et lubrifiants
-,CONSOMMABLES,Consommables,Joints, isolant et etancheite
-,CONSOMMABLES,Consommables,Mousses
-,CONSOMMABLES,Consommables,Peintures
-,CONSOMMABLES,Consommables,Enduits
-,CONSOMMABLES,Consommables,Produits d'entretien
-,CONSOMMABLES,Consommables,Soudure
-,CONSOMMABLES,Consommables,Disques
-,CONSOMMABLES,Consommables,Forets
-,CONSOMMABLES,Consommables,Gourdes
-,CONSOMMABLES,Consommables,Sel de déneigement
-,CONSOMMABLES,Consommables,Sel de régenration
-,CONSOMMABLES,Consommables,Cadenas de consignation
-,PLOMBERIE,Tube à souder,tube à souder
-,EQUIPEMENT MEDICAL,Chariot douche,Accessoires
-,EQUIPEMENT MEDICAL,Lève malade,Accessoires
-,EQUIPEMENT MEDICAL,Fauteuil roulant,Accessoires
-,EQUIPEMENT MEDICAL,Table d'examen,Accessoires
-,EQUIPEMENT MEDICAL,Berceaux,Accessoires
-,EQUIPEMENT MEDICAL,Brancard,Accessoires
-,EQUIPEMENT MEDICAL,eclairage opératoire,Accessoires
-,EQUIPEMENT HOTELIER,chariot et borne repas,Accessoires
-,EQUIPEMENT HOTELIER,table de nuit,Accessoires
-,EQUIPEMENT HOTELIER,Lave vaisselle,Accessoires
-,EQUIPEMENT HOTELIER,Lave bassin,Accessoires
-,EQUIPEMENT HOTELIER,Fontane à eau,Accessoires
-,EQUIPEMENT HOTELIER,Machine à glaçon,Accessoires
-,EQUIPEMENT HOTELIER,Machine à café,Accessoires
-,AGENCEMENT,MACONNERIE,ragréage
-,AGENCEMENT,MACONNERIE,carrelage
-,AGENCEMENT,MACONNERIE,platre
-,AGENCEMENT,MACONNERIE,Carreaux de platre
-,AGENCEMENT,MACONNERIE,plaque platre
-,AGENCEMENT,MACONNERIE,rails plaque de platre
-,AGENCEMENT,ameublement,tablettes bois
-,AGENCEMENT,menuiserie,plaque bois et pvc
-,SIGNALETIQUE,Signalétique,film et bache
-,SIGNALETIQUE,Signalétique,tonner
-,EQUIPEMENT DE PROTECTION,EPC,Barrière
-,EQUIPEMENT DE PROTECTION,EPC,Plots`;
+const REFERENTIEL = {
+  "CONSOMMABLES": {
+    "Consommables": [
+      "Abrasifs", "Adhesifs", "Agrafes", "Cable metallique", "Ciments et reboucheurs", 
+      "Colles", "Colorants", "Crayons, marqueurs et temoins", "Deggripants", "Drisses", 
+      "Films et polyanes", "Graisses et lubrifiants", "Joints, isolant et etancheite", 
+      "Mousses", "Peintures", "Enduits", "Produits d'entretien", "Soudure", "Disques", 
+      "Forets", "Gourdes", "Sel de déneigement", "Sel de régenration", "Cadenas de consignation"
+    ]
+  },
+  "PLOMBERIE": {
+    "Tube à souder": ["tube à souder"]
+  },
+  "EQUIPEMENT MEDICAL": {
+    "Chariot douche": ["Accessoires"],
+    "Lève malade": ["Accessoires"],
+    "Fauteuil roulant": ["Accessoires"],
+    "Table d'examen": ["Accessoires"],
+    "Berceaux": ["Accessoires"],
+    "Brancard": ["Accessoires"],
+    "eclairage opératoire": ["Accessoires"]
+  },
+  "EQUIPEMENT HOTELIER": {
+    "chariot et borne repas": ["Accessoires"],
+    "table de nuit": ["Accessoires"],
+    "Lave vaisselle": ["Accessoires"],
+    "Lave bassin": ["Accessoires"],
+    "Fontane à eau": ["Accessoires"],
+    "Machine à glaçon": ["Accessoires"],
+    "Machine à café": ["Accessoires"]
+  },
+  "AGENCEMENT": {
+    "MACONNERIE": ["ragréage", "carrelage", "platre", "Carreaux de platre", "plaque platre", "rails plaque de platre"],
+    "ameublement": ["tablettes bois"],
+    "menuiserie": ["plaque bois et pvc"]
+  },
+  "SIGNALETIQUE": {
+    "Signalétique": ["film et bache", "tonner"]
+  },
+  "EQUIPEMENT DE PROTECTION": {
+    "EPC": ["Barrière", "Plots"]
+  }
+};
 
-// Composant pour écraser les marges par défaut de Vite/StackBlitz
+// Version texte du référentiel optimisée pour l'IA Gemini
+const REFERENTIEL_TEXT_FOR_AI = `
+- CONSOMMABLES > Consommables > Abrasifs, Adhesifs, Agrafes, Cable metallique, Ciments et reboucheurs, Colles, Colorants, Crayons, marqueurs et temoins, Deggripants, Drisses, Films et polyanes, Graisses et lubrifiants, Joints, isolant et etancheite, Mousses, Peintures, Enduits, Produits d'entretien, Soudure, Disques, Forets, Gourdes, Sel de déneigement, Sel de régenration, Cadenas de consignation
+- PLOMBERIE > Tube à souder > tube à souder
+- EQUIPEMENT MEDICAL > Chariot douche, Lève malade, Fauteuil roulant, Table d'examen, Berceaux, Brancard, eclairage opératoire > Accessoires
+- EQUIPEMENT HOTELIER > chariot et borne repas, table de nuit, Lave vaisselle, Lave bassin, Fontane à eau, Machine à glaçon, Machine à café > Accessoires
+- AGENCEMENT > MACONNERIE > ragréage, carrelage, platre, Carreaux de platre, plaque platre, rails plaque de platre
+- AGENCEMENT > ameublement > tablettes bois
+- AGENCEMENT > menuiserie > plaque bois et pvc
+- SIGNALETIQUE > Signalétique > film et bache, tonner
+- EQUIPEMENT DE PROTECTION > EPC > Barrière, Plots
+`;
+
+// Composant pour écraser les marges par défaut
 const GlobalCssReset = () => (
   <style dangerouslySetInnerHTML={{__html: `
     #root { max-width: none !important; padding: 0 !important; margin: 0 !important; width: 100vw; height: 100vh; text-align: left !important; }
@@ -103,34 +99,6 @@ export default function BackOfficeApp() {
   const [formData, setFormData] = useState({
     designation: '', marque: '', reference_fabricant: '', groupe: '', famille: '', type: ''
   });
-
-  // --- PARSEUR DU RÉFÉRENTIEL CSV ---
-  const referentiel = useMemo(() => {
-    const lines = REFERENTIEL_CSV.split('\n').filter(l => l.trim().length > 0);
-    const hierarchy = {};
-    
-    // On ignore la première ligne (les en-têtes)
-    for (let i = 1; i < lines.length; i++) {
-      // Sépare par virgule et retire les cellules vides (gère la virgule initiale de ton CSV)
-      const cols = lines[i].split(/[,;\t]/).map(c => c.trim().replace(/^"|"$/g, '')).filter(c => c !== '');
-      
-      if (cols.length >= 3) {
-        // Prendre les 3 dernières colonnes non-vides
-        const type = cols.pop();
-        const famille = cols.pop();
-        const groupe = cols.pop();
-
-        if (groupe && famille && type) {
-          if (!hierarchy[groupe]) hierarchy[groupe] = {};
-          if (!hierarchy[groupe][famille]) hierarchy[groupe][famille] = [];
-          if (!hierarchy[groupe][famille].includes(type)) {
-            hierarchy[groupe][famille].push(type);
-          }
-        }
-      }
-    }
-    return hierarchy;
-  }, []);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -187,7 +155,7 @@ export default function BackOfficeApp() {
     setIsProcessingAI(true);
     
     try {
-      if (!GEMINI_API_KEY) throw new Error("Clé API manquante. Ajoutez VITE_GEMINI_API_KEY sur Vercel.");
+      if (!GEMINI_API_KEY) throw new Error("Clé API manquante. Veuillez vérifier votre VITE_GEMINI_API_KEY sur Vercel.");
 
       const imageResponse = await fetch(selectedArticle.photo_url);
       const imageBlob = await imageResponse.blob();
@@ -197,19 +165,18 @@ export default function BackOfficeApp() {
           reader.readAsDataURL(imageBlob);
       });
 
-      // LE NOUVEAU PROMPT : On force l'IA à utiliser le CSV
       const promptText = `Tu es un expert magasinier technique de l'APHP.
       Analyse l'image fournie et le code-barre scanné suivant : ${selectedArticle.code_barre}.
       Identifie cet article et déduis un maximum d'informations visibles.
       
-      🚨 RÈGLE ABSOLUE POUR LA CLASSIFICATION 🚨
+      REGLE ABSOLUE POUR LA CLASSIFICATION :
       Tu dois OBLIGATOIREMENT choisir la combinaison "groupe", "famille" et "type" la plus pertinente PARMI CETTE LISTE EXACTE :
-      ${REFERENTIEL_CSV}
+      ${REFERENTIEL_TEXT_FOR_AI}
       
       Ne les invente pas. Recopie la majuscule et l'orthographe exactes de la liste.
-      Si rien ne correspond, laisse des chaînes vides "".
+      Si rien ne correspond parfaitement, laisse des chaines vides "".
 
-      IMPORTANT: Renvoyer UNIQUEMENT un objet JSON valide, sans formatage markdown (pas de \`\`\`json).
+      IMPORTANT: Renvoyer UNIQUEMENT un objet JSON valide, sans formatage markdown ni balises de code.
       Structure exacte :
       {
         "designation": "Nom complet détaillé",
@@ -235,10 +202,10 @@ export default function BackOfficeApp() {
       const cleanJsonText = result.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
       const aiData = JSON.parse(cleanJsonText);
 
-      // Validation de la réponse IA contre le référentiel pour la sécurité
-      let finalGroupe = referentiel[aiData.groupe] ? aiData.groupe : '';
-      let finalFamille = (finalGroupe && referentiel[finalGroupe][aiData.famille]) ? aiData.famille : '';
-      let finalType = (finalFamille && referentiel[finalGroupe][finalFamille].includes(aiData.type)) ? aiData.type : '';
+      // Validation de la réponse IA contre le référentiel JavaScript
+      let finalGroupe = REFERENTIEL[aiData.groupe] ? aiData.groupe : '';
+      let finalFamille = (finalGroupe && REFERENTIEL[finalGroupe][aiData.famille]) ? aiData.famille : '';
+      let finalType = (finalFamille && REFERENTIEL[finalGroupe][finalFamille].includes(aiData.type)) ? aiData.type : '';
 
       setFormData({
         designation: aiData.designation || '', 
@@ -327,9 +294,8 @@ export default function BackOfficeApp() {
             <div className="bg-blue-50 text-blue-800 p-4 rounded-xl text-left text-sm">
                 <strong>Pour utiliser ce code sur Vercel ou StackBlitz :</strong>
                 <ul className="list-disc pl-5 mt-2 space-y-1">
-                    <li>Décommentez les imports <code>@supabase/supabase-js</code> en haut du fichier.</li>
-                    <li>Décommentez les déclarations contenant <code>import.meta.env</code>.</li>
-                    <li>Supprimez les constantes "mock" ajoutées pour la prévisualisation.</li>
+                    <li>Allez dans le code source de l'application.</li>
+                    <li>Décommentez les 5 lignes d'importation Supabase et Gemini tout en haut du fichier.</li>
                 </ul>
             </div>
           </div>
@@ -359,14 +325,26 @@ export default function BackOfficeApp() {
                 <label className="text-slate-300 text-sm font-bold mb-2 block">Identifiant (Email)</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500"><User size={20} /></div>
-                  <input type="email" required className="w-full bg-slate-900 border border-slate-700 text-white rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:border-emerald-500" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <input 
+                    type="email" 
+                    required 
+                    className="w-full bg-slate-900 border border-slate-700 text-white rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:border-emerald-500" 
+                    value={email} 
+                    onChange={(e) => setEmail(e.target.value)} 
+                  />
                 </div>
               </div>
               <div>
                 <label className="text-slate-300 text-sm font-bold mb-2 block">Mot de passe</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500"><Lock size={20} /></div>
-                  <input type={showPassword ? "text" : "password"} required className="w-full bg-slate-900 border border-slate-700 text-white rounded-2xl py-4 pl-12 pr-12 focus:outline-none focus:border-emerald-500" value={password} onChange={(e) => setPassword(e.target.value)} />
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    required 
+                    className="w-full bg-slate-900 border border-slate-700 text-white rounded-2xl py-4 pl-12 pr-12 focus:outline-none focus:border-emerald-500" 
+                    value={password} 
+                    onChange={(e) => setPassword(e.target.value)} 
+                  />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500"><Eye size={20} /></button>
                 </div>
               </div>
@@ -379,9 +357,9 @@ export default function BackOfficeApp() {
   }
 
   // Listes dynamiques pour les dropdowns basées sur le référentiel
-  const availableGroups = Object.keys(referentiel).sort();
-  const availableFamilies = formData.groupe ? Object.keys(referentiel[formData.groupe] || {}).sort() : [];
-  const availableTypes = (formData.groupe && formData.famille) ? (referentiel[formData.groupe][formData.famille] || []).sort() : [];
+  const availableGroups = Object.keys(REFERENTIEL).sort();
+  const availableFamilies = formData.groupe ? Object.keys(REFERENTIEL[formData.groupe] || {}).sort() : [];
+  const availableTypes = (formData.groupe && formData.famille) ? (REFERENTIEL[formData.groupe][formData.famille] || []).sort() : [];
 
   return (
     <>
