@@ -153,14 +153,13 @@ export default function BackOfficeApp() {
       Analyse l'image fournie et le code-barre scanné suivant : ${selectedArticle.code_barre}.
       Identifie cet article et déduis un maximum d'informations visibles.
       
-      REGLE ABSOLUE POUR LA CLASSIFICATION :
-      Tu dois OBLIGATOIREMENT choisir la combinaison "groupe", "famille" et "type" la plus pertinente PARMI CET ARBRE DE CLASSIFICATION EXACT (JSON) :
-      ${JSON.stringify(REFERENTIEL, null, 2)}
+      RÈGLE ABSOLUE POUR LA CLASSIFICATION :
+      Tu dois OBLIGATOIREMENT choisir la combinaison "groupe", "famille" et "type" la plus pertinente PARMI CE CATALOGUE JSON :
+      ${JSON.stringify(REFERENTIEL)}
       
-      Ne les invente pas. Recopie la majuscule et l'orthographe exactes de l'arbre ci-dessus.
-      Si rien ne correspond parfaitement, laisse des chaines vides "".
+      Si rien ne correspond parfaitement, choisis le groupe le plus proche ou laisse des chaines vides "".
 
-      IMPORTANT: Renvoyer UNIQUEMENT un objet JSON valide, sans formatage markdown ni balises de code.
+      IMPORTANT: Renvoyer UNIQUEMENT un objet JSON valide. Ne mets AUCUN texte avant ou après.
       Structure exacte :
       {
         "designation": "Nom complet détaillé",
@@ -184,14 +183,27 @@ export default function BackOfficeApp() {
       if (!response.ok) throw new Error("Erreur de connexion à Gemini");
       const result = await response.json();
       const cleanJsonText = result.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
-      const aiData = JSON.parse(cleanJsonText);
-
-      // Validation TOLÉRANTE de la réponse IA (ignore la casse et les espaces superflus)
-      const cleanStr = (s) => (s || '').toString().trim().toLowerCase();
       
-      const finalGroupe = Object.keys(REFERENTIEL).find(g => cleanStr(g) === cleanStr(aiData.groupe)) || '';
-      const finalFamille = finalGroupe ? (Object.keys(REFERENTIEL[finalGroupe]).find(f => cleanStr(f) === cleanStr(aiData.famille)) || '') : '';
-      const finalType = finalFamille ? (REFERENTIEL[finalGroupe][finalFamille].find(t => cleanStr(t) === cleanStr(aiData.type)) || '') : '';
+      const aiData = JSON.parse(cleanJsonText);
+      console.log("🛠️ RÉPONSE BRUTE DE L'IA :", aiData); // <-- Utile pour le débogage dans la console du navigateur
+
+      // Validation HYPER TOLÉRANTE de la réponse IA (ignore accents, casse et espaces)
+      const normalizeStr = (s) => {
+          if (!s) return '';
+          return s.toString()
+                  .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Supprime les accents
+                  .toLowerCase()
+                  .trim();
+      };
+      
+      const aiGroupeNorm = normalizeStr(aiData.groupe);
+      const aiFamilleNorm = normalizeStr(aiData.famille);
+      const aiTypeNorm = normalizeStr(aiData.type);
+
+      // Recherche correspondante dans notre objet
+      const finalGroupe = Object.keys(REFERENTIEL).find(g => normalizeStr(g) === aiGroupeNorm) || '';
+      const finalFamille = finalGroupe ? (Object.keys(REFERENTIEL[finalGroupe]).find(f => normalizeStr(f) === aiFamilleNorm) || '') : '';
+      const finalType = finalFamille ? (REFERENTIEL[finalGroupe][finalFamille].find(t => normalizeStr(t) === aiTypeNorm) || '') : '';
 
       setFormData({
         designation: aiData.designation || '', 
@@ -202,8 +214,14 @@ export default function BackOfficeApp() {
         type: finalType
       });
 
-      showToast(`Analyse réussie avec ${selectedModel} !`);
+      if(finalGroupe) {
+          showToast(`Analyse réussie avec classification trouvée !`);
+      } else {
+          showToast(`Analyse réussie, mais classification manuelle requise.`);
+      }
+
     } catch(e) {
+      console.error(e);
       showToast(e.message || "Erreur de l'analyse IA.");
     } finally {
       setIsProcessingAI(false);
